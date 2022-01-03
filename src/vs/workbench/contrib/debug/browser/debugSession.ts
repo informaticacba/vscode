@@ -38,6 +38,7 @@ import { IInstantiationService } from 'vs/platform/instantiation/common/instanti
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { IPaneCompositePartService } from 'vs/workbench/services/panecomposite/browser/panecomposite';
 import { ViewContainerLocation } from 'vs/workbench/common/views';
+import { IAudioNotificationService } from 'vs/editor/browser/services/audioNotificationService';
 
 export class DebugSession implements IDebugSession {
 
@@ -90,6 +91,7 @@ export class DebugSession implements IDebugSession {
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@ICustomEndpointTelemetryService private readonly customEndpointTelemetryService: ICustomEndpointTelemetryService,
 		@IWorkbenchEnvironmentService private readonly workbenchEnvironmentService: IWorkbenchEnvironmentService,
+		@IAudioNotificationService private readonly _audioNotificationService: IAudioNotificationService,
 	) {
 		this._options = options || {};
 		if (this.hasSeparateRepl()) {
@@ -913,6 +915,10 @@ export class DebugSession implements IDebugSession {
 		}));
 
 		this.rawListeners.push(this.raw.onDidStop(async event => {
+			if (event.body.reason === 'breakpoint') {
+				this._audioNotificationService.playBreakpointHitSound();
+			}
+
 			this.passFocusScheduler.cancel();
 			this.stoppedDetails.push(event.body);
 			await this.fetchThreads(event.body);
